@@ -34,9 +34,14 @@ spec:
       cpu:
         cores: 1
       memory:
+        # Ensure we meet minimum requirements
         container:
-          min: 1Gi
+          min: 2Gi
           max: 2Gi
+        # Bypass memory check for development
+        redpanda:
+          memory: 2Gi
+          reserveMemory: 1Gi
 
     # Storage for local development
     storage:
@@ -88,3 +93,8 @@ spec:
       tune_aio_events: false
       tune_clocksource: false
       tune_coredump: false
+
+    # Developer mode - bypass resource checks
+    config:
+      cluster:
+        developer_mode: true
