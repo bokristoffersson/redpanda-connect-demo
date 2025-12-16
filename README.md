@@ -34,9 +34,6 @@ This repository follows a standard GitOps structure:
     ├── cert-manager/        # cert-manager deployment
     └── redpanda/            # Redpanda deployment
 ```
-
-## Setup Process
-
 The main steps involve:
 
 1. Creating a local Kubernetes cluster with one control plane and three worker nodes using kind
@@ -59,12 +56,32 @@ kind create cluster --config kind.yaml
 3. Running `flux bootstrap github` with your credentials and the path `clusters/local-kind`
 4. Verifying deployment success via HelmRelease status
 
+## Run this example
+Fork this repository, and configure Flux to connect to your fork and deploy the Redpanda Helm chart.
+
+[NOTE]
+====
+Make sure to do the following:
+
+- Provide Flux with your https://fluxcd.io/flux/installation/bootstrap/github/#github-pat[GitHub personal access token (PAT)].
+- Configure the `path` flag with the value `kubernetes/gitops-helm`. This is the path where the example manifests are stored in the repository.
+====
+
+Export your GITHUB values:
+```
+export GITHUB_USER=<github_user_name>
+export GITHUB_REPO=<name_of_repo>
+export GITHUB_TOKEN=<your_github_token>
+```
+
 Example bootstrap command:
 ```bash
 flux bootstrap github \
-  --owner=<your-github-username> \
-  --repository=<your-repo-name> \
+  --token-auth \
+  --owner=$GITHUB_USER \
+  --repository=$GITHUB_REPO \
   --path=clusters/local-kind \
+  --branch=main \
   --personal
 ```
 
@@ -87,3 +104,12 @@ flux get helmreleases -A
 # Check Redpanda pods
 kubectl get pods -n redpanda
 ```
+
+== Delete the cluster
+
+To delete the Kubernetes cluster as well as all the Docker resources that kind created, run:
+
+[,bash]
+----
+kind delete cluster
+----
