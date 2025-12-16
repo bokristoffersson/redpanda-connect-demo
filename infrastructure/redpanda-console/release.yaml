@@ -1,0 +1,52 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: redpanda-console
+  namespace: redpanda
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: console
+      version: "0.7.x"
+      sourceRef:
+        kind: HelmRepository
+        name: redpanda
+        namespace: flux-system
+      interval: 1m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  dependsOn:
+    - name: redpanda
+      namespace: redpanda
+  values:
+    console:
+      config:
+        kafka:
+          brokers:
+            - redpanda-0.redpanda.redpanda.svc.cluster.local:9093
+            - redpanda-1.redpanda.redpanda.svc.cluster.local:9093
+            - redpanda-2.redpanda.redpanda.svc.cluster.local:9093
+          schemaRegistry:
+            enabled: true
+            urls:
+              - http://redpanda-0.redpanda.redpanda.svc.cluster.local:8081
+        redpanda:
+          adminApi:
+            enabled: true
+            urls:
+              - http://redpanda-0.redpanda.redpanda.svc.cluster.local:9644
+              - http://redpanda-1.redpanda.redpanda.svc.cluster.local:9644
+              - http://redpanda-2.redpanda.redpanda.svc.cluster.local:9644
+
+    service:
+      type: NodePort
+      port: 8080
+      nodePort: 30080
+
+    ingress:
+      enabled: false

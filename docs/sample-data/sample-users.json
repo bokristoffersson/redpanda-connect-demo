@@ -1,0 +1,42 @@
+[
+  {
+    "user_id": 501,
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "signup_date": "2024-01-15",
+    "account_type": "premium",
+    "total_orders": 12
+  },
+  {
+    "user_id": 502,
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "signup_date": "2024-02-20",
+    "account_type": "standard",
+    "total_orders": 5
+  },
+  {
+    "user_id": 503,
+    "name": "Carol Williams",
+    "email": "carol@example.com",
+    "signup_date": "2024-03-10",
+    "account_type": "premium",
+    "total_orders": 8
+  },
+  {
+    "user_id": 504,
+    "name": "David Brown",
+    "email": "david@example.com",
+    "signup_date": "2024-04-05",
+    "account_type": "basic",
+    "total_orders": 3
+  },
+  {
+    "user_id": 505,
+    "name": "Eva Martinez",
+    "email": "eva@example.com",
+    "signup_date": "2024-05-12",
+    "account_type": "premium",
+    "total_orders": 15
+  }
+]

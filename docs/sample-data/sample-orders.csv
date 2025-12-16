@@ -1,0 +1,11 @@
+order_id,customer_id,product_name,quantity,price,status
+1001,501,Premium Widget,5,149.99,pending
+1002,502,Standard Gadget,2,49.99,processing
+1003,503,Deluxe Tool,1,299.99,shipped
+1004,504,Basic Widget,10,19.99,pending
+1005,501,Advanced Gadget,3,89.99,processing
+1006,505,Pro Tool Set,1,499.99,shipped
+1007,506,Mini Widget,25,9.99,delivered
+1008,507,Mega Gadget,2,199.99,pending
+1009,508,Ultra Tool,1,599.99,processing
+1010,509,Starter Kit,5,39.99,shipped

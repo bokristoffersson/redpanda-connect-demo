@@ -1,0 +1,90 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: monitoring
+spec:
+  interval: 5m
+  timeout: 10m
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: "55.x.x"
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+      interval: 1m
+  install:
+    crds: Create
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3
+  values:
+    # Prometheus configuration
+    prometheus:
+      prometheusSpec:
+        retention: 7d
+        resources:
+          requests:
+            memory: 400Mi
+            cpu: 200m
+          limits:
+            memory: 800Mi
+            cpu: 500m
+
+        # Service monitors for Redpanda
+        serviceMonitorSelector:
+          matchLabels:
+            app.kubernetes.io/name: redpanda
+
+        additionalScrapeConfigs:
+          - job_name: 'redpanda'
+            static_configs:
+              - targets:
+                  - 'redpanda-0.redpanda.redpanda.svc.cluster.local:9644'
+                  - 'redpanda-1.redpanda.redpanda.svc.cluster.local:9644'
+                  - 'redpanda-2.redpanda.redpanda.svc.cluster.local:9644'
+
+          - job_name: 'redpanda-connect'
+            static_configs:
+              - targets:
+                  - 'redpanda-connect.demo.svc.cluster.local:4195'
+
+    # Grafana configuration
+    grafana:
+      enabled: true
+      adminPassword: admin
+      service:
+        type: NodePort
+        nodePort: 30000
+
+      dashboardProviders:
+        dashboardproviders.yaml:
+          apiVersion: 1
+          providers:
+            - name: 'redpanda'
+              orgId: 1
+              folder: 'Redpanda'
+              type: file
+              disableDeletion: false
+              editable: true
+              options:
+                path: /var/lib/grafana/dashboards/redpanda
+
+      datasources:
+        datasources.yaml:
+          apiVersion: 1
+          datasources:
+            - name: Prometheus
+              type: prometheus
+              url: http://kube-prometheus-stack-prometheus:9090
+              access: proxy
+              isDefault: true
+
+    # Alertmanager
+    alertmanager:
+      enabled: true

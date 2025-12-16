@@ -1,0 +1,182 @@
+# Redpanda Connect File Processing Pipeline
+# Demonstrates: HTTP Upload → Transform → Fan-out to Multiple Destinations
+
+http:
+  enabled: true
+  address: "0.0.0.0:4195"
+  root_path: /benthos
+  debug_endpoints: true
+  cors:
+    enabled: true
+    allowed_origins:
+      - "*"
+
+# Input: HTTP server for file uploads
+input:
+  label: "file_upload_server"
+  http_server:
+    path: /upload
+    allowed_verbs:
+      - POST
+    timeout: 30s
+    sync_response:
+      status: 200
+      headers:
+        Content-Type: application/json
+      metadata:
+        include_prefixes: []
+        include_patterns: []
+
+# Processing pipeline
+pipeline:
+  processors:
+    # Extract multipart form data
+    - label: "parse_multipart"
+      bloblang: |
+        root = this
+        meta filename = meta("http_server_request_path")
+
+    # Parse file content based on type
+    - label: "parse_file_content"
+      switch:
+        - check: 'content().string().contains(",") || content().string().contains("\"") '
+          processors:
+            - csv:
+                parse_header_row: true
+                lazy_quotes: true
+            - label: "csv_to_json_array"
+              bloblang: |
+                root = this.map_each(row -> row)
+
+        - processors:
+            - bloblang: |
+                root = this.parse_json()
+
+    # Split array into individual messages
+    - label: "unarchive_to_messages"
+      unarchive:
+        format: json_array
+
+    # Add metadata and enrichment
+    - label: "enrich_message"
+      bloblang: |
+        root = this
+        root.meta = {
+          "pipeline_timestamp": now().ts_unix(),
+          "pipeline_source": "redpanda-connect-file-upload",
+          "processing_id": uuid_v4()
+        }
+
+    # Add calculated fields (example transformation)
+    - label: "add_calculated_fields"
+      bloblang: |
+        root = this
+        # If there's a price and quantity field, calculate total
+        root.calculated = if this.exists("price") && this.exists("quantity") {
+          {"total_value": this.price * this.quantity}
+        } else { {} }
+
+    # Log each processed record
+    - label: "log_record"
+      log:
+        level: INFO
+        message: "Processing record: ${! json() }"
+
+# Output: Fan-out to multiple destinations
+output:
+  broker:
+    pattern: fan_out_sequential
+    outputs:
+      # Output 1: Redpanda topic (streaming data)
+      - label: "kafka_output"
+        kafka_franz:
+          seed_brokers:
+            - redpanda-0.redpanda.redpanda.svc.cluster.local:9093
+            - redpanda-1.redpanda.redpanda.svc.cluster.local:9093
+            - redpanda-2.redpanda.redpanda.svc.cluster.local:9093
+          topic: files.processed
+          key: ${! this.meta.processing_id }
+          partitioner: manual
+          compression: snappy
+          max_in_flight: 10
+          batching:
+            count: 100
+            period: 1s
+          metadata:
+            include_patterns:
+              - ".*"
+
+      # Output 2: Aggregate back to file and send to MinIO/S3
+      - label: "s3_output"
+        processors:
+          - archive:
+              format: json_array
+          - bloblang: |
+              meta filename = "processed-" + now().ts_unix().string() + ".json"
+        aws_s3:
+          bucket: uploads
+          path: "${! meta(\"filename\") }"
+          endpoint: http://minio.demo.svc.cluster.local:9000
+          region: us-east-1
+          force_path_style_urls: true
+          credentials:
+            id: minioadmin
+            secret: minioadmin
+          batching:
+            count: 1000
+            period: 10s
+
+      # Output 3: Send notification to webhook
+      - label: "webhook_notification"
+        processors:
+          - archive:
+              format: json_array
+          - bloblang: |
+              root = {
+                "event_type": "file_processed",
+                "timestamp": now().format_timestamp("2006-01-02T15:04:05Z07:00"),
+                "summary": {
+                  "records_count": this.length(),
+                  "processing_id": this.0.meta.processing_id,
+                  "sample_record": this.0
+                },
+                "message": "File processing completed successfully"
+              }
+        http_client:
+          url: http://mock-api.demo.svc.cluster.local:8080/webhook
+          verb: POST
+          headers:
+            Content-Type: application/json
+            X-Source: redpanda-connect
+          rate_limit: ""
+          timeout: 30s
+          retry_period: 1s
+          max_retry_backoff: 5s
+          retries: 3
+          backoff:
+            initial_interval: 500ms
+            max_interval: 3s
+          batching:
+            count: 1
+            period: 1s
+
+# Metrics for Prometheus
+metrics:
+  prometheus:
+    prefix: redpanda_connect
+    push_url: ""
+    push_interval: ""
+    push_job_name: redpanda-connect
+
+# Logging configuration
+logger:
+  level: INFO
+  format: json
+  add_timestamp: true
+  static_fields:
+    '@service': redpanda-connect
+    environment: demo
+
+# Tracing (optional)
+tracer:
+  none: {}

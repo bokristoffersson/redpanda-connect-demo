@@ -1,0 +1,53 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: redpanda-demo
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # Redpanda Console
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP
+      # Upload Web UI
+      - containerPort: 30085
+        hostPort: 8085
+        protocol: TCP
+      # Redpanda Connect HTTP API
+      - containerPort: 30195
+        hostPort: 4195
+        protocol: TCP
+      # MinIO Console
+      - containerPort: 30900
+        hostPort: 9000
+        protocol: TCP
+      # Mock API
+      - containerPort: 30090
+        hostPort: 9090
+        protocol: TCP
+      # Grafana
+      - containerPort: 30000
+        hostPort: 3000
+        protocol: TCP
+      # Redpanda Kafka API
+      - containerPort: 30092
+        hostPort: 9092
+        protocol: TCP
+      # Redpanda Schema Registry
+      - containerPort: 30081
+        hostPort: 8081
+        protocol: TCP
+  - role: worker
+    labels:
+      node-type: redpanda
+  - role: worker
+    labels:
+      node-type: redpanda
+  - role: worker
+    labels:
+      node-type: redpanda

@@ -1,0 +1,105 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: redpanda
+  namespace: redpanda
+spec:
+  interval: 5m
+  timeout: 10m
+  chart:
+    spec:
+      chart: redpanda
+      version: "5.9.x"
+      sourceRef:
+        kind: HelmRepository
+        name: redpanda
+        namespace: flux-system
+      interval: 1m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  dependsOn:
+    - name: cert-manager
+      namespace: cert-manager
+  values:
+    # Core cluster configuration
+    statefulset:
+      replicas: 3
+
+    # Resource allocation for kind cluster
+    resources:
+      cpu:
+        cores: 1
+      memory:
+        container:
+          min: 1Gi
+          max: 2Gi
+
+    # Storage for local development
+    storage:
+      persistentVolume:
+        enabled: true
+        size: 10Gi
+        storageClass: standard
+
+    # Affinity to distribute brokers across workers
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: redpanda
+            topologyKey: kubernetes.io/hostname
+
+    # NodePort services for localhost access
+    external:
+      enabled: true
+      type: NodePort
+      domain: localhost
+
+    # Kafka API configuration
+    listeners:
+      kafka:
+        port: 9092
+        external:
+          default:
+            advertisedPorts:
+              - 9092
+            port: 30092
+
+      # Schema Registry
+      schemaRegistry:
+        enabled: true
+        port: 8081
+        external:
+          default:
+            advertisedPorts:
+              - 8081
+            port: 30081
+
+      # Admin API
+      admin:
+        port: 9644
+        external:
+          default:
+            advertisedPorts:
+              - 9644
+            port: 30644
+
+    # Enable metrics for monitoring
+    monitoring:
+      enabled: true
+      scrapeInterval: 30s
+
+    # Console access
+    console:
+      enabled: false  # Deployed separately for GitOps demo
+
+    # Tuning for local development
+    tuning:
+      tune_aio_events: false
+      tune_clocksource: false
+      tune_coredump: false
