@@ -18,6 +18,10 @@ spec:
         namespace: redpanda
       interval: 1m
   values:
+    listeners:
+      kafka:
+        tls:
+          enabled: false
     statefulset:
       initContainers:
         setDataDirOwnership:
