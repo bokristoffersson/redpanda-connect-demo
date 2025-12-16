@@ -4,8 +4,10 @@ metadata:
   name: redpanda
   namespace: redpanda
 spec:
+  dependsOn:
+    - name: cert-manager
+      namespace: cert-manager
   interval: 5m
-  timeout: 15m
   chart:
     spec:
       chart: redpanda
@@ -13,23 +15,10 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: redpanda
-        namespace: flux-system
+        namespace: redpanda
       interval: 1m
-  dependsOn:
-    - name: cert-manager
-      namespace: cert-manager
   values:
-    # Core cluster configuration
     statefulset:
       initContainers:
         setDataDirOwnership:
           enabled: true
-
-    # Enable metrics for monitoring
-    monitoring:
-      enabled: true
-      scrapeInterval: 30s
-
-    # Console access
-    console:
-      enabled: false  # Deployed separately for GitOps demo

@@ -4,27 +4,10 @@ metadata:
   name: infrastructure
   namespace: flux-system
 spec:
-  interval: 10m
-  timeout: 5m
-  retryInterval: 2m
-  prune: true
-  wait: true
+  interval: 10m0s
   sourceRef:
     kind: GitRepository
     name: flux-system
   path: ./infrastructure
-
-  # Health checks for infrastructure components
-  healthChecks:
-    - apiVersion: helm.toolkit.fluxcd.io/v2beta1
-      kind: HelmRelease
-      name: cert-manager
-      namespace: cert-manager
-    - apiVersion: helm.toolkit.fluxcd.io/v2beta1
-      kind: HelmRelease
-      name: redpanda
-      namespace: redpanda
-    - apiVersion: helm.toolkit.fluxcd.io/v2beta1
-      kind: HelmRelease
-      name: redpanda-console
-      namespace: redpanda
+  prune: true
+  wait: true
