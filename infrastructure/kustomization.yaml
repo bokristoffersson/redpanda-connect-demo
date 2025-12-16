@@ -4,6 +4,6 @@ resources:
   - namespaces
   - sources
   - cert-manager
-  - redpanda
-  - redpanda-console
-  - monitoring
+ # - redpanda
+ # - redpanda-console
+ # - monitoring
