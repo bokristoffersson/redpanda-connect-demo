@@ -18,11 +18,10 @@ spec:
         namespace: redpanda
       interval: 1m
   values:
-    console:
-      config:
-        kafka:
-          brokers:
-            - redpanda.redpanda.svc.cluster.local:9093
+    config:
+      kafka:
+        brokers:
+          - redpanda.redpanda.svc.cluster.local:9093
     service:
       type: ClusterIP
       port: 8080
