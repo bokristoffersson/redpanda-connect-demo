@@ -1,6 +1,4 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - cert-manager-ns.yaml
-  - redpanda-ns.yaml
-  - redpanda-connect-ns.yaml
+  - redpanda-connect
