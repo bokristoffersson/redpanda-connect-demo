@@ -15,55 +15,15 @@ spec:
         name: redpanda
         namespace: flux-system
       interval: 1m
-  install:
-    remediation:
-      retries: 3
-  upgrade:
-    remediation:
-      retries: 3
   dependsOn:
     - name: cert-manager
       namespace: cert-manager
   values:
     # Core cluster configuration
     statefulset:
-      replicas: 3
-
-    # Storage for local development
-    storage:
-      persistentVolume:
-        enabled: true
-        size: 10Gi
-        storageClass: standard
-
-    # Affinity to distribute brokers across workers
-    affinity:
-      podAntiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchLabels:
-                app.kubernetes.io/name: redpanda
-            topologyKey: kubernetes.io/hostname
-
-    # External access configuration for kind cluster
-    external:
-      enabled: false  # Disable external access for simplicity
-
-    # Listeners configuration
-    listeners:
-      kafka:
-        port: 9093  # Internal port
-
-      schemaRegistry:
-        enabled: true
-        port: 8081
-
-      admin:
-        port: 9644
-
-      http:
-        enabled: true
-        port: 8082
+      initContainers:
+        setDataDirOwnership:
+          enabled: true
 
     # Enable metrics for monitoring
     monitoring:
@@ -73,9 +33,3 @@ spec:
     # Console access
     console:
       enabled: false  # Deployed separately for GitOps demo
-
-    # Tuning for local development
-    tuning:
-      tune_aio_events: false
-      tune_clocksource: false
-      tune_coredump: false
