@@ -79,8 +79,3 @@ spec:
       tune_aio_events: false
       tune_clocksource: false
       tune_coredump: false
-
-    # Developer mode - bypass resource checks
-    config:
-      cluster:
-        developer_mode: true
