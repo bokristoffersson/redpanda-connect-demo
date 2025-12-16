@@ -3,3 +3,4 @@ kind: Kustomization
 namespace: redpanda
 resources:
   - release.yaml
+  - nodeport-services.yaml

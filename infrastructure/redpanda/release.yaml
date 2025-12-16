@@ -54,40 +54,25 @@ spec:
                 app.kubernetes.io/name: redpanda
             topologyKey: kubernetes.io/hostname
 
-    # NodePort services for localhost access
+    # External access configuration for kind cluster
     external:
-      enabled: true
-      type: NodePort
-      domain: localhost
+      enabled: false  # Disable external access for simplicity
 
-    # Kafka API configuration
+    # Listeners configuration
     listeners:
       kafka:
-        port: 9092
-        external:
-          default:
-            advertisedPorts:
-              - 9092
-            port: 30092
+        port: 9093  # Internal port
 
-      # Schema Registry
       schemaRegistry:
         enabled: true
         port: 8081
-        external:
-          default:
-            advertisedPorts:
-              - 8081
-            port: 30081
 
-      # Admin API
       admin:
         port: 9644
-        external:
-          default:
-            advertisedPorts:
-              - 9644
-            port: 30644
+
+      http:
+        enabled: true
+        port: 8082
 
     # Enable metrics for monitoring
     monitoring:

@@ -75,15 +75,8 @@ spec:
               options:
                 path: /var/lib/grafana/dashboards/redpanda
 
-      datasources:
-        datasources.yaml:
-          apiVersion: 1
-          datasources:
-            - name: Prometheus
-              type: prometheus
-              url: http://kube-prometheus-stack-prometheus:9090
-              access: proxy
-              isDefault: true
+      # Datasources - use default Prometheus datasource from chart
+      # No custom datasource configuration needed
 
     # Alertmanager
     alertmanager:
