@@ -5,5 +5,5 @@ resources:
   - sources
   - cert-manager
   - redpanda
- # - redpanda-console
+  - redpanda-console
  # - monitoring
